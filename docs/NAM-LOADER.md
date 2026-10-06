@@ -1,5 +1,35 @@
 # Load multiple NAM captures (and cab IRs)
 
+> **Beta.** Tested on one MS-70CDR only. If you try it on another model, please
+> file a [NAM / Cab report](https://github.com/themanro/ZoomMultistompZDL/issues/new?template=nam-cab-report.yml),
+> including when everything works.
+
+## If the pedal freezes
+
+A bad effect file can stop the pedal from finishing boot, or freeze it when a
+patch uses the effect. It is recoverable, and in testing it always was:
+
+1. **Remove the last file you installed.** Zoom Effect Manager can still reach
+   a pedal that will not boot: start the pedal in **firmware update mode**
+   (see Zoom's firmware update instructions for your model), connect Effect
+   Manager, delete the effect you added last, and write.
+2. **If a saved patch freezes it** (boots fine until that patch loads): remove
+   or replace the effect the same way. Patches that used it come back with that
+   slot empty.
+3. **Last resort — erases all your patches:** power off, hold the **leftmost
+   knob pressed in**, power on, choose `All INITIALIZE`, press the footswitch.
+
+Things that are known to freeze it, so you can avoid them:
+
+- Two effect files whose names are the same in their first 8 characters.
+  The loader's file names (`NAM4smok.ZDL`, `C01sm57.ZDL`) are built to avoid
+  this; don't rename them.
+- An effect file over about 32 KB. Loader output is always under the limit.
+- An old `NAMLite-<name>.ZDL` from before 2026-09-29 (see below).
+
+Whenever you report a freeze, say which files were installed and which one you
+added last.
+
 > **Filenames changed (2026-09-29): captures are now `NAM<slot><name>.ZDL`,
 > e.g. `NAM2smok.ZDL`.** The old `NAMLite-<name>.ZDL` files all cut down to
 > `NAMLite-` on the pedal (it keeps 8 characters), and two installed files with
@@ -41,8 +71,8 @@
 > float), and has **Bass / Mid / Treb** on the second knob page. Captures made
 > with the old 0.14 engine crackle at full rate; 0.21/0.22 captures work but use
 > more DSP or lack the gate — re-export to upgrade.
-> Capture slots 1 and 2 are pre-built in `dist/NAM1ampt.ZDL` (TREC, high
-> gain) and `dist/NAM2smok.ZDL` (Marlboro Smokey, crunch).
+> No captures ship with the repo: bring your own `.nam` (e.g. from
+> [TONE3000](https://www.tone3000.com/)) and build it with the loader.
 
 1. Start the local Patch Editor. Open **Settings → Custom NAM captures → Open NAM Loader**.
 2. Choose a compatible `.nam` file.
@@ -52,7 +82,7 @@
    capture notes. Install the ZDL through Zoom Effect Manager.
 5. Repeat with another file and another slot. Both can remain installed.
 6. Close Effect Manager and reconnect PE. PE calls the effect `NAMLite-smokey`;
-   the pedal uses the shorter `NAM-smokey` under Delay, version **0.23**.
+   the pedal uses the shorter `NAM-smokey` under Delay, version **0.25**.
 7. Compare captures one at a time, initially Input 50 / Output 25 / **Mix 100**
    (Mix starts at 0, and at 0 the model does not run).
 
@@ -82,14 +112,15 @@ the same capture without an EQ. It costs ~1.8% of the DSP whatever the settings.
 
 ## DSP headroom
 
-At full rate one capture uses most of the pedal's DSP. On the owner's MS-70CDR
-one extra effect (a fuzz) fits with an occasional crackle; two more stock
-effects do not. How the full rate was made to fit at all is in
+At full rate one capture uses most of the pedal's DSP: it declares 194 of the
+roughly 225 the pedal allows, Eco 177, a cab 10. On the owner's MS-70CDR a
+full-rate capture plus one light effect (Great Muff, or a cab) plays clean.
+Patch Editor's DSP meter adds the chain up before you write it. How the full rate was made to fit at all is in
 [NAM-RUNTIME-INVESTIGATION.md](NAM-RUNTIME-INVESTIGATION.md).
 
 ## Capture slots and names
 
-Eight independent identities are reserved (FXIDs 900–907, Delay group). These
+Sixteen independent identities are reserved (FXIDs 900–907 and 950–957, Delay group). These
 were checked against the current stock, custom, legacy and probe database and
 source manifests. Original NAMLite (498) is unchanged. Merely renaming a file
 would not create another effect; each slot has its own ID and DLL identity.
@@ -105,7 +136,7 @@ Names and occupancy are stored in this browser at this address. Keep the same
 browser and URL (localhost and 127.0.0.1 are different origins). Browser storage
 is not a pedal inventory. Another browser/computer or cleared storage cannot
 know your occupied slots: use saved capture notes before choosing a slot. PE
-recognizes all eight IDs even without these names, as generic numbered captures.
+recognizes all sixteen IDs even without these names, as generic numbered captures.
 It updates names when returning from the loader or receiving a storage update.
 
 This enables keeping several captures installed, not a guarantee that multiple

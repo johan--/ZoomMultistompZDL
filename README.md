@@ -32,6 +32,13 @@ Load your own amp captures ([NAM](https://www.neuralampmodeler.com/)) and
 speaker cabinets (IRs) onto the pedal. Everything runs in your browser — no
 compiler, nothing uploaded anywhere.
 
+> **Beta — testers wanted.** Only tested on one MS-70CDR so far. Other models
+> may hit `DSP full` sooner or crackle. Keep a backup of your patches, and read
+> [If the pedal freezes](docs/NAM-LOADER.md#if-the-pedal-freezes) before you
+> install anything. Please report what you find with the
+> [NAM / Cab report form](https://github.com/themanro/ZoomMultistompZDL/issues/new?template=nam-cab-report.yml)
+> — results from pedals other than the MS-70CDR are especially useful.
+
 **How to use it**
 
 1. Open the [NAM + Cab Loader](tools/nam_loader.html) (Patch Editor
