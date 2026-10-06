@@ -44,7 +44,7 @@ function applyContext(){
  const c=context({patch:{name:'Old name',fx:[[1,42,60,10]]},midiOut:{},READ_ONLY:false,DEVID:97,
  dirty:new Set(['0,2']),dirtyVersions:new Map([['0,2',1]]),lastEditedSlot:null,
  waitIdle:async()=>{},decodePatch:x=>JSON.parse(JSON.stringify(x)),encodePatch:x=>{sent=structuredClone(x);return sent;},
- zx:x=>x,send:()=>{},render:()=>{},reconcilePatch:p=>{c.patch=p;},readCurrent:async()=>structuredClone(live)});
+ zx:x=>x,send:()=>{},render:()=>{},reconcilePatch:p=>{c.patch=p;},readCurrent:async()=>structuredClone(live),lockSiblingWrites:()=>{}});
  vm.runInContext(fn('applyToPedal'),c);return {c,live,getSent:()=>sent};
 }
 test('Apply preserves live name and untouched fields; clears only verified edits',async()=>{
@@ -192,4 +192,53 @@ test('mode selector preserves readback values and sends only on a different dete
  blocked=true;select.value='0';select.events.change();assert.equal(select.value,'2');assert.equal(changes.length,1);
  blocked=false;w._setNorm(0);assert.deepEqual(changes,[60,8]);w._release();assert.equal(releases.length,2);
  w._receive(100);assert.equal(select.value,'2');assert.equal(changes.length,2);
+});
+
+// MS-50G patch dump from issue #1 (device 0x58, firmware 3.10): "Atomic Gli",
+// LineSel / BitCrush / RndmFLTR / PitchDly.
+const MS50G_DUMP=('f0 52 00 58 28 0a 10 00 00 04 0c 10 01 00 00 00 00 00 00 00 00 00 00 00 00 00 21 00 00 42 0e 00 '
+ +'28 00 1e 00 40 00 06 00 00 00 00 00 00 21 00 01 01 00 04 08 48 44 00 03 20 10 20 45 06 00 00 00 '
+ +'00 00 00 01 01 00 00 10 03 78 00 14 30 40 02 40 16 00 '+'00 '.repeat(46)
+ +'00 40 11 0f 41 00 74 6f 6d 69 63 20 47 00 6c 69 00 f7').trim().split(/\s+/).map(x=>parseInt(x,16));
+function layoutContext(extra={}){
+ const c=context(extra);
+ const line=k=>src.slice(src.indexOf(k),src.indexOf('\n',src.indexOf(k)));
+ const bits=src.slice(src.indexOf('const BITS=['),src.indexOf('\n];',src.indexOf('const BITS=['))+3);
+ const db=src.slice(src.indexOf('const DB='),src.indexOf('\n',src.indexOf('const DB=')));
+ vm.runInContext(bits+'\n'+line('const NAMIDX=')+'\n'+line('function getBits(')+'\n'+fn('decodePatch')+'\n'+db
+  +'\nvar BYID={};for(const e of DB.custom.concat(DB.stock,DB.legacy||[],DB.probes||[]))BYID[e.id]=e;\n'
+  +line('const SIBLING_MODELS=')+'\n'+fn('layoutProblems')+'\n'+fn('enableSiblingWrites')+'\n'+fn('lockSiblingWrites')
+  +'\nthis.decodePatch=decodePatch;this.layoutProblems=layoutProblems;this.enableSiblingWrites=enableSiblingWrites;this.lockSiblingWrites=lockSiblingWrites;',c);
+ return c;
+}
+test('MS-50G dump decodes with the MS-70CDR layout and every value in range',()=>{
+ assert.equal(MS50G_DUMP.length,146);
+ const c=layoutContext(),p=c.decodePatch(MS50G_DUMP);
+ assert.equal(p.name,'Atomic Gli');assert.equal(p.maxfx,4);
+ assert.equal(c.layoutProblems(p).length,0,c.layoutProblems(p).join('; '));
+ const bad=MS50G_DUMP.slice();bad[47]=0x7f;bad[45]|=0x20;          // scramble slot 3's id bits
+ const q=c.decodePatch(bad);assert.notDeepEqual(q.fx[2][1],p.fx[2][1]);
+});
+function siblingContext(echo){
+ const el={hidden:false},sent=[],notes=[];let reads=0;
+ const c=layoutContext({DEVID:0x58,READ_ONLY:true,WRITE_TRIAL:false,midiOut:{},confirm:()=>true,busy:false,busySince:0,lastEnable:0,editModeActive:false,
+  $:()=>el,zx:x=>x,hex:a=>Array.from(a,x=>x.toString(16)).join(' '),log:()=>{},banner:m=>notes.push(m),render:()=>{},updateActionState:()=>{},sleep:async()=>{},
+  send:b=>{if(c.READ_ONLY&&b[4]===0x28)throw Error('blocked');sent.push(b);},
+  readCurrent:async()=>reads++?echo(MS50G_DUMP.slice()):MS50G_DUMP.slice()});
+ return {c,el,sent,notes};
+}
+test('sibling writes unlock only when the unchanged patch reads back byte-identical',async()=>{
+ const ok=siblingContext(d=>d);await ok.c.enableSiblingWrites();
+ assert.equal(ok.c.READ_ONLY,false);assert.equal(ok.c.WRITE_TRIAL,true);assert.equal(ok.el.hidden,true);
+ assert.deepEqual(ok.sent.find(b=>b.length===146),MS50G_DUMP,'the test writes the pedal\'s own bytes back unchanged');
+ const off=siblingContext(d=>{d[30]^=1;return d;});await off.c.enableSiblingWrites();
+ assert.equal(off.c.READ_ONLY,true);assert.equal(off.c.WRITE_TRIAL,false);assert.match(off.notes.at(-1),/did not pass/);
+ const silent=siblingContext(()=>null);await silent.c.enableSiblingWrites();assert.equal(silent.c.READ_ONLY,true);
+ const no=siblingContext(d=>d);no.c.confirm=()=>false;await no.c.enableSiblingWrites();assert.equal(no.sent.length,0);assert.equal(no.c.READ_ONLY,true);
+ const other=siblingContext(d=>d);other.c.DEVID=0x5b;await other.c.enableSiblingWrites();assert.equal(other.sent.length,0);assert.equal(other.c.READ_ONLY,true);
+});
+test('a write the sibling pedal does not keep locks writes again; MS-70CDR is unaffected',()=>{
+ const s=siblingContext(d=>d);s.c.READ_ONLY=false;s.c.WRITE_TRIAL=true;s.c.lockSiblingWrites('test');
+ assert.equal(s.c.READ_ONLY,true);assert.equal(s.c.WRITE_TRIAL,false);
+ const m=siblingContext(d=>d);m.c.DEVID=0x61;m.c.READ_ONLY=false;m.c.lockSiblingWrites('test');assert.equal(m.c.READ_ONLY,false);
 });

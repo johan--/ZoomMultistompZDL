@@ -546,6 +546,7 @@
 <footer id="noticeBar" aria-label="Editor notifications">
   <span class="hint">Latest update</span>
   <span id="noticeText" role="status" aria-live="polite" aria-atomic="true">Ready.</span>
+  <button id="enableWrites" hidden title="Test this pedal with a harmless write, then allow edits">Enable writes (experimental)</button>
   <button id="clearNotice" aria-label="Clear notification" title="Clear notification">✕</button>
 </footer>
 <script>
@@ -687,6 +688,13 @@ let DEVID=0x61;                         // MS-70CDR
 // exactly the data needed to find out whether a model is compatible at all, so
 // an unknown pedal becomes READ-ONLY rather than unusable.
 let READ_ONLY=false;
+// Siblings that answer with the MS-70CDR's 146-byte patch dump. A user's MS-50G
+// dump (issue #1) decodes cleanly with these tables -- name, all effects, every
+// value in range -- so writes are offered on them, opt-in, behind a round-trip
+// test (enableSiblingWrites). Any later write the pedal doesn't keep locks
+// them again. Other unknown models stay read-only.
+const SIBLING_MODELS={0x58:"MS-50G",0x5f:"MS-60B"};
+let WRITE_TRIAL=false;                  // true once a sibling passed the test
 let midiIn=null, midiOut=null, patch=null, rawPatch=null;
 // Pristine last dump AS THE PEDAL SENT IT. encodePatch() uses this as its base so the
 // 65 bytes the bit tables don't cover are preserved instead of being zeroed. Kept
@@ -805,7 +813,8 @@ function send(bytes){
   if(READ_ONLY && bytes.length>4 && bytes[0]===0xf0 && bytes[1]===0x52 && WRITE_CMDS.has(bytes[4])){
     log(`blocked a write (cmd 0x${bytes[4].toString(16)}) — this pedal reports device `
        +`0x${DEVID.toString(16)}, and the patch layout here is mapped only for the `
-       +`MS-70CDR (0x61). Reading is safe and useful; writing is not.`,"warn");
+       +`MS-70CDR (0x61). Reading is safe and useful; writing is not.`
+       +(SIBLING_MODELS[DEVID]?` Use “Enable writes (experimental)” in the bottom bar to test this pedal.`:""),"warn");
     throw new Error("Writes are disabled for this pedal model.");
   }
   const now=performance.now();
@@ -1048,7 +1057,17 @@ function handleSysex(m){
       // but one. This is what makes it useful for finding out whether a NEW
       // pedal speaks the same protocol at all.
       DEVID=m[6];
-      READ_ONLY=true;
+      READ_ONLY=true; WRITE_TRIAL=false;
+      const sibling=SIBLING_MODELS[DEVID];
+      if(sibling){
+        $("enableWrites").hidden=false;
+        log(`pedal reports device ${id} (firmware ${fw}): ${sibling}. Its patch dumps match `
+           +`the MS-70CDR layout, so writes can be unlocked after a test. Read-only until then.`,"warn");
+        banner(`${sibling} detected — read-only for now. Back up your patches, then click `
+              +`“Enable writes (experimental)” to test this pedal and unlock editing.`);
+        updateActionState();
+        return;
+      }
       log(`pedal reports device ${id} (firmware ${fw}), not 0x61. Adopting that id `
          +`for READS so dumps work, and blocking all writes: every byte offset in `
          +`this editor was mapped on an MS-70CDR. Reload bank / Re-read patch are `
@@ -1606,6 +1625,63 @@ function swapNZBits(raw,a,b){
 // stock effects from every MS/G1/B1 pedal, but your unit only has the subset
 // actually installed via Effect Manager, and writing an id it cannot resolve
 // leaves the slot blank.
+// Values a correct layout can never produce: an effect id we know with a knob
+// past its maximum. A dump from a model with a different layout trips this.
+function layoutProblems(p){
+  const bad=[];
+  for(let s=0;s<6;s++){
+    const e=BYID[p.fx[s][1]>>>0]; if(!e||!e.params)continue;
+    e.params.forEach((q,k)=>{if(p.fx[s][k+2]>q.max)bad.push(`slot ${s+1} ${e.name} ${q.name}=${p.fx[s][k+2]}>${q.max}`);});
+  }
+  return bad;
+}
+// Opt-in writes for a sibling model. The test writes the pedal's OWN current
+// patch back to its edit buffer, unchanged and not stored, and reads it again:
+// it cannot alter anything, and it shows whether the pedal takes a 146-byte
+// write at this layout without scrambling it. Writes unlock only on an exact
+// byte match.
+async function enableSiblingWrites(){
+  const model=SIBLING_MODELS[DEVID];
+  if(!model||!READ_ONLY||!midiOut)return;
+  if(!confirm(`Enable writes on this ${model}? (experimental)\n\n`
+     +`This editor was mapped on an MS-70CDR. Your ${model}'s patches read the same way, but writing is untested.\n\n`
+     +`Back up your patches first (Backup bank).\n\n`
+     +`Test: the editor writes the current patch back to the pedal unchanged (not stored) and reads it again. `
+     +`Writes unlock only if every byte comes back the same. Any later edit the pedal doesn't keep locks them again.`))return;
+  busy=true; busySince=performance.now();
+  try{
+    const before=await readCurrent(80,1600);
+    if(!before)throw new Error("the pedal sent no patch to test with");
+    const bad=layoutProblems(decodePatch(before));
+    if(bad.length){log(`write test: current patch decodes with impossible values (${bad.join("; ")})`,"warn");
+      throw new Error("this patch doesn't decode cleanly, so the layout may differ");}
+    READ_ONLY=false;
+    send(zx([0x50])); lastEnable=performance.now(); editModeActive=true;
+    send(before.slice()); await sleep(250);
+    const back=await readCurrent(80,1600);
+    if(!back)throw new Error("the pedal didn't answer after the test write");
+    const diff=[];for(let i=0;i<146;i++)if(back[i]!==before[i])diff.push(i);
+    if(diff.length){
+      log(`write test: ${diff.length} byte(s) differ after writing the patch back unchanged: `
+         +diff.slice(0,24).map(i=>`${i}: ${hex([before[i]])}→${hex([back[i]])}`).join(", "),"warn");
+      throw new Error(`the pedal changed ${diff.length} byte(s) of an unchanged patch`);
+    }
+    WRITE_TRIAL=true; $("enableWrites").hidden=true;
+    rawFromPedal=back.slice(); rawPatch=back.slice(); patch=decodePatch(back); render();
+    log(`write test passed on ${model}: patch written back and read identical (146/146 bytes). Writes enabled for this session.`);
+    banner(`Write test passed — editing enabled on this ${model} (experimental). Every edit is still checked against the pedal's read-back.`);
+  }catch(e){
+    READ_ONLY=true; WRITE_TRIAL=false;
+    banner(`Write test did not pass (${e.message||e}). The pedal stays read-only. Please report it with Copy diag.`);
+  }finally{busy=false;}
+}
+$("enableWrites").onclick=midiAction(enableSiblingWrites);
+// A sibling write the pedal didn't keep: stop writing and say so.
+function lockSiblingWrites(why){
+  if(!WRITE_TRIAL)return;
+  READ_ONLY=true; WRITE_TRIAL=false; updateActionState();
+  banner(`${SIBLING_MODELS[DEVID]}: ${why} — writes locked again. Please report it (Copy diag) so the layout can be fixed.`);
+}
 async function verifySlots(sentBytes, what){
   if(!sentBytes || sentBytes.length!==146) return;
   const want=decodePatch(sentBytes);
@@ -1629,6 +1705,7 @@ async function verifySlots(sentBytes, what){
   if(changed.length)
     log(`${what}: the pedal changed ${changed.join(", ")} — that is an encoding `
        +`bug, not a missing effect. Please report with diagnostics.`,"warn");
+  if(changed.length) lockSiblingWrites("the pedal changed an effect PE wrote");
   if(lost.length||changed.length)
     banner(`Pedal did not keep everything written (${lost.length} dropped, `
           +`${changed.length} altered). See the log.`);
@@ -2285,7 +2362,7 @@ function diagText(){
     "when   : "+new Date().toISOString(),
     "conn   : "+(!!midiOut)+"   IN="+(midiIn&&midiIn.name)+"  OUT="+(midiOut&&midiOut.name),
     "port   : IN "+(midiIn?midiIn.state+"/"+midiIn.connection:"-")+"   OUT "+(midiOut?midiOut.state+"/"+midiOut.connection:"-"),
-    "flags  : busy="+busy+" syncing="+syncing+" editMode="+editModeActive+" rxCount="+rxCount+" curProg="+(curProg+1),
+    "flags  : dev=0x"+DEVID.toString(16)+(READ_ONLY?" read-only":"")+(WRITE_TRIAL?" sibling-writes":"")+" busy="+busy+" syncing="+syncing+" editMode="+editModeActive+" rxCount="+rxCount+" curProg="+(curProg+1),
     "display: patch.curfx="+(patch?patch.curfx:"-")+"  maxfx="+(patch?patch.maxfx:"-")+"  lastEditedSlot="+(lastEditedSlot===null?"-":lastEditedSlot+1),
     "patch  : "+p,
     // Per-slot write-only flags. These are the bits a slot swap used to leave
@@ -2559,6 +2636,7 @@ async function applyToPedal(){
     for(const key of dirty){const [si,ki]=key.split(",").map(Number);got.fx[si][ki]=patch.fx[si][ki];}
     rawFromPedal=back.slice();rawPatch=encodePatch(got,back);reconcilePatch(got);
     if(failures)banner(`Pedal did not keep ${failures} changed field(s). Edits retained; check the slot and retry.`);
+    if(failures)lockSiblingWrites(`the pedal didn't keep ${failures} edited value(s)`);
     else log("Applied and verified changed fields. Saving follows the pedal’s AUTO SAVE setting; Save to pedal explicitly stores and reloads.");
   }finally{transientBypassSlot=-1;busy=false;}
 }
