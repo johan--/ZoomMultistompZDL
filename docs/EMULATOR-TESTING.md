@@ -32,6 +32,12 @@ it pulls in Cranelift.
 
 > The rig has twice been lost to a wiped scratchpad. It is in the repo now.
 > Keep it there.
+>
+> Ziddle itself lives in `~/ziddle/ziddle-source-1787802520` (with
+> `product/zdlprobe` added to the workspace members) and standard inputs in
+> `~/ziddle/inputs/`. **Never in /tmp**: macOS clears it, and that has cost the
+> whole setup twice. `tools/nam_prototype/host_vs_emulator.py` (TI vs host) and
+> `tools/nam_prototype/make_capture.cjs` (loader-path capture builds) are in the repo.
 
 ## 2. `matcheck` — does `_init` materialize params?
 

@@ -4,6 +4,21 @@ const fs=require('node:fs'),vm=require('node:vm');
 const src=fs.readFileSync(require('node:path').join(__dirname,'../patch_editor.html'),'utf8');
 function fn(name){const start=src.search(new RegExp('(?:async )?function '+name+'\\('));assert(start>=0);return src.slice(start,src.indexOf('\n}',start)+2);}
 function context(extra={}){return vm.createContext({setTimeout,clearTimeout,performance,Promise,Map,Set,Math,Array,Number,Error,busy:false,syncing:false,midiActionActive:false,actionCancelled:false,transientBypassSlot:-1,patchGeneration:0,nextSend:0,dumpCooldownUntil:0,pendingDump:null,sxAccum:null,autoApplyPending:false,sleep:async()=>{},banner:()=>{},log:()=>{},updateActionState:()=>{},...extra});}
+test('capture sync restores original DSP costs when saved overrides disappear or become invalid',()=>{
+ for(const baseline of [194,177]){
+  let saved=[{slot:1,shortName:'eco',cost:160}];
+  const e={namSlot:1,name:'NAMLite-original',captureName:'original',cost:baseline};
+  const c=context({DB:{custom:[e]},localStorage:{getItem:k=>k==='namlite-captures-v1'?JSON.stringify(saved):'[]'}});
+  vm.runInContext(src.split('\n').find(l=>l.startsWith('const NAM_BASE_COSTS='))+'\n'+fn('syncNamCaptureNames'),c);
+  assert.equal(c.syncNamCaptureNames(),true);assert.equal(e.cost,160);
+  saved=[];assert.equal(c.syncNamCaptureNames(),true);
+  assert.equal(e.cost,baseline);assert.equal(e.name,'NAMLite-original');
+  assert.equal(c.syncNamCaptureNames(),false);
+  saved=[{slot:1,shortName:'eco',cost:160}];c.syncNamCaptureNames();
+  saved=[{slot:1,shortName:'eco',cost:'invalid'}];c.syncNamCaptureNames();
+  assert.equal(e.cost,baseline);
+ }
+});
 test('transaction rejects overlap and releases ownership after failure',async()=>{
  const c=context();vm.runInContext(fn('cancelDump')+'\n'+fn('midiAction'),c);
  let finish;let calls=0;

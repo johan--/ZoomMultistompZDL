@@ -6,34 +6,29 @@ patch layout, every bit offset in the editor's tables — all of it is specific 
 that machine.
 
 The `+` models (**MS-50G+, MS-60B+, MS-70CDR+**) use a different container,
-`ZD2`, so nothing here loads on them. What follows is how to find out whether one
-could ever be targeted, in about an evening and without risking your pedal.
+`ZD2`, so the releases in `dist/` do not load on them.
+
+**September 14, 2026 update:** Stomphacks now documents a C-to-ZD2 pipeline and
+hardware-tested custom effects on the MS-70CDR+. General feasibility is no
+longer the open question for that model. See [ZD2 port notes](ZD2-PORT-NOTES.md).
+The checks below preserve our earlier device-discovery work; they are not an
+installation procedure or evidence of support for another model.
 
 **One report is in.** An MS-60B+ owner ran all three checks in August 2026 and the
 results are at the bottom of this page. Short version: the ZD2 container is the
 same `ZDLF` family as ZDL and wraps a plain ELF, so nothing is encrypted -- but
 the patch dump command is different, so the editor cannot read a `+` patch yet.
 
-## The question that actually decides it
+## What remains to establish
 
-Not "can the format be understood" — it can. `docs/STATE-ABI-PROGRESS.md` records
-a **hand-decoded ZD2 `Fx_SFX_LineSel`**, and the MS-60B+ report below confirms it
-from the other direction: the container carries the `ZDLF` tag and a plain ELF
-object. It is not an opaque blob.
+For our pack, the remaining work is adapting the ZD2 audio interface, verifying
+state and delay-memory allocation, and testing each target model. PE also needs
+a separate patch-protocol implementation. None of those ports has been done.
 
-The real question is different:
-
-> The MS-70CDR is hackable because **Zoom themselves ship a tool that writes
-> effect binaries to it.** None of this work is an exploit — Effect Manager is
-> the loading mechanism, and this project just learned to speak its file format.
-
-So for a `+` pedal, what matters is whether an official write path still exists.
-If it does, custom effects are a reverse-engineering job of the same shape as
-this one. If it does not, they become firmware modification, which is a
-completely different and much harder proposition.
-
-The three checks below establish, in order: whether the payload is readable,
-whether the pedal talks, and whether it will hand over a patch.
+The three historical checks below concern readable effect data, MIDI identity,
+and patch readback. Plain ELF and entropy observations cannot by themselves
+rule out signatures or other loader checks. Stomphacks' reported successful
+custom installs are stronger evidence for its tested MS-70CDR+ setup.
 
 ---
 
@@ -168,7 +163,8 @@ zero-run bytes: 27.3%
 `5a 44 4c 46` is the ASCII tag **`ZDLF`** — the same container family as the ZDL
 files this repo builds — wrapping an ordinary **ELF object**. Consistent across
 all three files, entropy in the 5.3 range with a wide per-block spread and around
-27% zero runs. Nothing is encrypted, signed or packed.
+27% zero runs. The inspected payloads are readable ELF. These observations alone do not
+establish whether the loader performs signature or integrity checks.
 
 **Check 2 — it answers, on a different device id.** `f0 7e 00 06 02 52 6e 00 27
 00 31 2e 32 30 f7`: Zoom, device **0x6e**, firmware **1.20**. The editor detected

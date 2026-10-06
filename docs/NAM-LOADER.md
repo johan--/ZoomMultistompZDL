@@ -1,0 +1,174 @@
+# Load multiple NAM captures (and cab IRs)
+
+> **Filenames changed (2026-09-29): captures are now `NAM<slot><name>.ZDL`,
+> e.g. `NAM2smok.ZDL`.** The old `NAMLite-<name>.ZDL` files all cut down to
+> `NAMLite-` on the pedal (it keeps 8 characters), and two installed files with
+> the same cut-down name freeze it on boot. Remove any `NAMLite-…` capture files
+> from the pedal and install the renamed ones. The 0.23 engine was not at fault.
+> **Hardware-confirmed 2026-09-29:** `NAM1ampt` + `NAM2smok` installed together
+> boot fine (with CabIR also installed).
+>
+> **Calibrated DSP estimates (2026-10-06).** Current captures declare full-rate
+> NAM 194, Eco 6/8 NAM 177, and CabIR 10. PE uses an approximate budget of 228;
+> hardware accepted a declared total of 224.4 and refused 228.4. These costs
+> help the pedal reject oversized chains with **DSP Full**, but are admission
+> estimates, not measured CPU usage or a guarantee against crackling while
+> turning controls. Re-export and reinstall captures to use the current costs.
+>
+> **16 capture slots (2026-10-06).** Slots 1-8 keep FXIDs 900-907; slots 9-16
+> are 950-957 (908-913 were the retired CabIR bank and NAM test effects).
+> Files `NAM<slot><name>` (4 name characters for slots 1-9, 3 for 10-16, e.g.
+> `NAM12amp.ZDL`); short names must start with a letter so slot 1 can never
+> collide with slots 10-16 on the pedal's 8-character names. Patch Editor lists
+> only the captures and cabs you have made (named via this browser's loader or
+> files in dist/), not the empty reserved slots.
+>
+> **Engine 0.25 (2026-10-02).** 51-row Bass/Mid/Treb table (3 KB smaller; odd knob
+> values play the next even one), flat-EQ skip, and an **Eco** checkbox: the model
+> runs 6 of every 8 samples (~6% less DSP; within 0.7 dB of full rate through a cab) for amp-only captures going into a cab.
+> Eco templates: `tools/nam_template_eco/`.
+>
+> **Engine 0.24 (2026-10-02, rebuilt).** The first 0.24 froze the pedal on load: it was
+> over the ZDL size cap (see SAFE-DSP-RULES.md). This one is smaller than 0.23.
+> ~4% lighter than 0.23 (predicate-free input and
+> output loops once warm), so NAM + CabIR has more room; sound within rounding
+> (~90 dB) of 0.23. Re-export captures to get it.
+>
+> **Engine 0.23 (2026-09-28).** Adds a **Gate** knob (page 3) that mutes the
+> amp hiss between notes; Gate 0 is off and bit-identical to 0.22. Engine 0.22
+> was the same sound as 0.21, bit for bit, with about 21% less DSP work. Every capture the loader makes now plays at full
+> rate with the full model (23 layers × 3 channels, all 1,871 weights, 32-bit
+> float), and has **Bass / Mid / Treb** on the second knob page. Captures made
+> with the old 0.14 engine crackle at full rate; 0.21/0.22 captures work but use
+> more DSP or lack the gate — re-export to upgrade.
+> Capture slots 1 and 2 are pre-built in `dist/NAM1ampt.ZDL` (TREC, high
+> gain) and `dist/NAM2smok.ZDL` (Marlboro Smokey, crunch).
+
+1. Start the local Patch Editor. Open **Settings → Custom NAM captures → Open NAM Loader**.
+2. Choose a compatible `.nam` file.
+3. Give it a short name (1–8 ASCII letters, numbers, hyphens or underscores),
+   such as `smokey`. Choose an unused capture slot.
+4. Click **Create pedal file**, then download **NAM2smok.ZDL** (slot 2 here) and its
+   capture notes. Install the ZDL through Zoom Effect Manager.
+5. Repeat with another file and another slot. Both can remain installed.
+6. Close Effect Manager and reconnect PE. PE calls the effect `NAMLite-smokey`;
+   the pedal uses the shorter `NAM-smokey` under Delay, version **0.23**.
+7. Compare captures one at a time, initially Input 50 / Output 25 / **Mix 100**
+   (Mix starts at 0, and at 0 the model does not run).
+
+## Cabinets (CabIR)
+
+The same page has a **Cabinets** section. Each cab IR WAV (44.1/48 kHz, up to
+2 s) is fitted in the browser to a 32-tap FIR + 6 filters and becomes **its own
+CabIR effect**, like a NAM capture: up to 16 slots (FXID 930-945), files
+`C<slot><name>.ZDL` (e.g. `C01sm57.ZDL`), pedal name `CAB-<name>`, picked
+from the slot's effect list -- no Cab knob. A cab keeps its slot; removing one
+frees the slot for the next. Download one cab or all; install with Effect
+Manager. Cost ~800 cycles (~5% of NAM). Details:
+`src/hardware_probes/cab_ir/README.md`.
+
+## Knobs
+
+| page | knobs |
+|---|---|
+| 1 | Input, Output, Mix |
+| 2 | Bass, Mid, Treb — 50 is exactly flat |
+| 3 | Gate — 0 is off; 1–100 sets the threshold from −99 to −30 dB |
+
+The tone stack is voiced like the NAM plugin's: Bass a low shelf at 150 Hz
+(±20 dB), Mid a peak at 425 Hz (±15 dB), Treb a high shelf at 1.8 kHz (±10 dB),
+run in that order after the model. At 50/50/50 the output is bit-identical to
+the same capture without an EQ. It costs ~1.8% of the DSP whatever the settings.
+
+## DSP headroom
+
+At full rate one capture uses most of the pedal's DSP. On the owner's MS-70CDR
+one extra effect (a fuzz) fits with an occasional crackle; two more stock
+effects do not. How the full rate was made to fit at all is in
+[NAM-RUNTIME-INVESTIGATION.md](NAM-RUNTIME-INVESTIGATION.md).
+
+## Capture slots and names
+
+Eight independent identities are reserved (FXIDs 900–907, Delay group). These
+were checked against the current stock, custom, legacy and probe database and
+source manifests. Original NAMLite (498) is unchanged. Merely renaming a file
+would not create another effect; each slot has its own ID and DLL identity.
+
+Reusing a slot replaces that capture in every patch referencing it, even if you
+choose a new short name. The page identifies occupied slots and prevents duplicate
+short names across slots. Same-file reexports select their previous slot; new
+files select the first locally unused slot. When all slots are occupied, choose
+which one to replace. Creating a download does not install or replace anything
+on the pedal.
+
+Names and occupancy are stored in this browser at this address. Keep the same
+browser and URL (localhost and 127.0.0.1 are different origins). Browser storage
+is not a pedal inventory. Another browser/computer or cleared storage cannot
+know your occupied slots: use saved capture notes before choosing a slot. PE
+recognizes all eight IDs even without these names, as generic numbered captures.
+It updates names when returning from the loader or receiving a storage update.
+
+This enables keeping several captures installed, not a guarantee that multiple
+neural effects can process simultaneously within the pedal's DSP budget.
+
+## Compatibility
+
+Conversion stays in the browser, without a compiler or upload. Open via localhost
+or HTTPS rather than file://. Install through Effect Manager on a computer;
+PE cannot install `.nam` files directly.
+
+Only the supported 3-channel A2 Lite WaveNet layout is accepted, either directly
+or as a matching SlimmableContainer submodel. The page checks shape, activations,
+coefficient count and finite values. Bigger networks, LSTMs and other shapes
+are rejected. File limit is 20 MB.
+
+44.1 and 48 kHz captures are accepted. Playback remains native 44.1 kHz without
+resampling, so 48 kHz captures can differ from their original tone and timing.
+Wet is mono. Hardware fidelity remains experimental.
+
+## Verification
+
+**Engine 0.23** (0.22 + gate; 0.22 = 0.21 + register-accumulated tap loops). Templates are packaged by `tools/nam_prototype/package_eq_templates.py`
+(the old `package_multi_templates.py` refuses to run: it would restore the
+crackling 0.12 engine). Checks: the audio code is byte-identical in all eight
+slots; the seed capture's weights occur exactly once and are zeroed; slot 1
+filled by the loader's own `convertNamed` is **byte-identical** to a direct
+build of the same capture; that file runs clean in the emulator (no resets,
+mirror invariants hold) and, with the EQ flat, its output is bit-identical to
+the NAMFull2 engine and to the 0.21 capture 1 (also at EQ 90/20/70 and
+0/100/0). Emulated callback: 15,763 cycles median vs 20,011 for 0.21; the gate adds
+~170 (15,933 with Gate 0, 15,950 with it on). Gate 0 is bit-identical to 0.22
+(EQ flat and 90/20/70); with the gate on the TI build matches the host build
+to 1e-10. `validate_tone_stack.py` step 4 covers the gate. `validate_exact_rings.py` and `validate_tone_stack.py`
+cover the kernel and EQ on the host. The 0.14 templates are archived in
+`build/nam-archive/2026-09-28/nam_template-0.14/`; the 0.21 and 0.22
+templates and capture 1 in `nam_template-0.2x/` and `capture1-0.2x/`.
+
+**Engine 0.14 (historical):**
+
+Eight templates are linked from the tested Smokey 0.12 object, with distinct
+IDs and DLL/SONAME identities. Their DSP instructions are byte-identical to the
+working block build. Capture coefficients are zeroed before packaging; no
+capture is bundled. Browser conversion changes only weights, version and the
+12-byte display-name field. All other code, relocations and tables stay intact.
+
+Automated tests verify unique IDs, restricted writes, names, registry replacement,
+unsupported models and damaged templates. Multi-capture installation was
+confirmed on hardware 2026-09-29 once filenames were kept to 8 characters. Original single-identity conversion remains covered by
+byte comparisons with previously tested Smokey and Megaphone binaries.
+
+`tools/nam_prototype/package_multi_templates.py` creates the reserved templates
+and PE entries. `build/extract_effect_db.py` preserves their metadata during
+normal DB rebuilds. The capture-free engine binaries are not installable effects
+until the browser fills their model data.
+
+Tests: `node --test tools/tests/nam_loader.test.cjs tools/tests/patch_editor.test.cjs`.
+
+### Generic capture artwork
+
+Every new export embeds the native 128×64 NAM cover. The result also offers a
+same-name PNG for Effect Manager; save it beside the ZDL. Existing installed
+captures need to be exported and installed again to receive the cover.
+The artwork source is `build/capture_art.py`; both template packaging scripts
+include it and verify that DSP instructions remain unchanged apart from relocated
+constant addresses.

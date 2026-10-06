@@ -3,7 +3,7 @@ import math
 from screen_image import Canvas
 from stock_style_covers import fill,line,round_shape
 from lcd_geometry import PIXEL_ASPECT
-NAMES={'Oxide','Galactic','Flower','Shatter','Arrakis','Microlm','Corrupt','Klang','GenLoss','Scorch','Howl','Taffy','Dissolve','Mangle','Hydra','Rewire','Dustbox','Spiral','Gyre'}
+NAMES={'Oxide','Galactic','Flower','Shatter','Arrakis','Microlm','Corrupt','Klang','GenLoss','Scorch','Howl','Taffy','Dissolve','Mangle','Hydra','Rewire','Dustbox','Spiral','Gyre','Tonic'}
 
 def word(c,text,x,y,sx=2,sy=2,v=1,lean=0):
     # Compact stock-style block lettering; all marks stay on the pixel grid.
@@ -33,7 +33,17 @@ def draw(name,labels):
     for (_,x,y),label in zip(knob_layout(min(3,len(labels))),labels[:3]):
         c.draw_text(label.upper(),x+10-(len(label)*4-1)//2,37)
         round_shape(c,x+10,y+7,7);round_shape(c,x+10,y+7,5,0);c.vline(x+10,y+3,y+7)
-    if name=='Flower':
+    if name=='Tonic':
+        c.rect(3,2,124,33)
+        # Laboratory vessel, bubbling signal and reversible process arrows.
+        for a,b in [((15,5),(25,5)),((17,5),(17,13)),((23,5),(23,13)),
+                    ((17,13),(9,28)),((23,13),(31,28)),((9,28),(31,28))]:line(c,a,b)
+        wave(c,12,28,23,2,12)
+        round_shape(c,20,18,2,filled=False);c.px(22,10)
+        word(c,'TONIC',43,9,sx=4,sy=3)
+        c.hline(43,115,28);line(c,(109,25),(115,28));line(c,(109,31),(115,28))
+        c.hline(43,115,5);line(c,(43,5),(49,3));line(c,(43,5),(49,7))
+    elif name=='Flower':
         for a in range(0,360,60):
             r=math.radians(a);round_shape(c,23+round(12*math.cos(r)),17+round(9*math.sin(r)),8,filled=False)
         round_shape(c,23,17,4)

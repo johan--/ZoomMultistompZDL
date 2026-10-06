@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>NAM + Cab Loader · MultiStomp</title>
+<style>
+:root{color-scheme:light;--ink:#102d3c;--paper:#c4e6f6;--panel:#a9d1e6}*{box-sizing:border-box}body{margin:0;background:#182c34;color:var(--ink);font:17px/1.55 system-ui,sans-serif}main{max-width:760px;margin:40px auto;background:var(--paper);border:5px solid #071923;padding:32px;box-shadow:9px 9px 0 #091920}h1{font:700 32px monospace;letter-spacing:1px;margin:0}h2{font-size:20px}a{color:inherit}header{border-bottom:3px solid;padding-bottom:18px;margin-bottom:25px}label{font-weight:700;display:block;margin-bottom:12px}input{max-width:100%}.pick{background:var(--panel);padding:24px;border:2px dashed;margin:22px 0}button,.download{display:inline-block;background:var(--ink);color:#d0f1ff;border:0;padding:12px 20px;font:700 16px system-ui;text-decoration:none;cursor:pointer}button:disabled{opacity:.45;cursor:default}.hint{font-size:14px}#status{min-height:2em;font-weight:600}#status[data-error="true"]{color:#842329}#result{border-top:2px solid;padding-top:20px}#downloads{display:flex;gap:12px;flex-wrap:wrap}.steps{padding-left:23px}.steps li{margin:10px 0}summary{cursor:pointer}details{margin-top:22px}footer{margin-top:28px;font-size:14px}.cabs{border-top:3px solid;margin-top:34px;padding-top:6px}#bank{list-style:none;padding:0;margin:18px 0;display:grid;gap:12px}#bank li{background:var(--panel);border:2px solid;padding:12px;display:grid;grid-template-columns:auto 1fr auto;gap:10px 14px;align-items:center}#bank canvas{width:180px;height:72px;background:var(--paper);border:1px solid}#bank .meta{font-size:14px}#bank .meta input{width:9ch;font:inherit}#bank .tools{display:flex;gap:6px}#bank .tools button{padding:6px 10px;font-size:14px}.knob{font:700 13px monospace}#cabStatus{min-height:1.6em;font-weight:600}#cabStatus[data-error="true"]{color:#842329}#cabDownloads{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}@media(max-width:600px){#bank li{grid-template-columns:1fr}#bank canvas{width:100%}}@media(max-width:600px){main{margin:12px;padding:20px;box-shadow:none}h1{font-size:27px}}
+</style></head><body><main>
+<header><a href="patch_editor.html">← Patch Editor</a><h1>NAM + CAB LOADER</h1><p>Turn a compatible NAM capture, or a set of cabinet IRs, into an effect for your MultiStomp.</p></header>
+<p>Your file stays in this browser. Conversion does not connect to or write to the pedal.</p>
+<div class="pick"><label for="capture">Choose a .nam capture</label><input id="capture" type="file" accept=".nam,application/json"><p id="chosen" class="hint">Supports the same A2 Lite model layout tested with NAMLite.</p></div>
+<label for="shortname">Short name (up to 8 characters)</label><input id="shortname" maxlength="8" placeholder="smokey" autocomplete="off"><label for="slot" style="margin-top:18px">Capture slot</label><select id="slot" aria-describedby="slotHint"></select><p id="slotHint" class="hint"></p>
+<label style="font-weight:400;margin-top:14px"><input type="checkbox" id="eco"> <strong>Eco</strong> — run the model on 6 of every 8 samples: ~6% less DSP; through a cab it measures within 0.7 dB of full rate. Use it for amp-only captures that go into a cab (CabIR), where those highs are cut anyway.</label>
+<button id="build" disabled>Create pedal file</button><p id="status" role="status" aria-live="polite">Loading the NAMLite engine…</p>
+<section id="result" hidden><h2 id="resultTitle">Your effect is ready</h2><div id="downloads"></div>
+<ol class="steps"><li>Download the named ZDL and keep its capture notes. The NAM cover is built in. For the Effect Manager thumbnail, download the PNG beside the ZDL, keeping their matching names.</li><li>Add it in <strong>Zoom Effect Manager</strong> and install it. Different capture slots can remain installed together.</li><li>Close Effect Manager, reconnect Patch Editor and select your named capture in the Custom list. On the pedal, find <strong>NAM-shortname under Delay</strong>, version <strong id="namVersion">0.23</strong>.</li><li>Test one capture at a time: <strong>Input 50 · Output 25 · Mix 100</strong>. Compare with bypass or Mix 0.</li></ol>
+<p>Sixteen independent capture slots; original NAMLite is unchanged. Reusing a slot replaces that capture in every patch using it. Installing several does not guarantee enough DSP to run them simultaneously.</p>
+<p class="hint">Slot names are remembered in this browser. Keep using the same browser and address. If you clear browser storage or use another computer, use your saved capture notes to identify occupied slots before exporting. PE still recognizes all eight IDs as generic capture slots.</p></section>
+<section class="cabs" aria-labelledby="cabTitle"><h2 id="cabTitle">Cabinets — CabIR</h2>
+<p>Each cab IR becomes its own <strong>CabIR</strong> effect, the same way each capture becomes its own NAM effect: pick it from the slot's effect list, no Cab knob. Up to 16 cabs (IDs 930–945). One cab costs about 5% of NAM's load, so it fits after a capture. Each IR is fitted as a short FIR plus six filters, in this browser.</p>
+<div class="pick"><label for="irs">Add cab IRs (.wav)</label><input id="irs" type="file" accept=".wav,audio/wav,audio/x-wav" multiple><p class="hint">44.1 or 48 kHz, mono or stereo, up to 2 s. Fitting takes a few seconds per IR. Use amp-only NAM captures in front of a cab.</p></div>
+<ol id="bank" aria-label="Your cabs"></ol>
+<button id="buildCab" disabled>Download all cab files</button><p id="cabStatus" role="status" aria-live="polite">Loading the cab engine…</p><div id="cabDownloads"></div>
+<p class="hint">Each cab keeps its slot, so patches never switch cab under you. Removing a cab frees its slot for the next one you add; remove its file in Effect Manager too. Cabs are remembered in this browser.</p></section>
+<details><summary>Which captures work?</summary><p>This experimental loader accepts the specific 3-channel A2 Lite WaveNet layout used by our tested captures, including compatible Lite models inside a SlimmableContainer. Other NAM architectures and larger models are rejected.</p><p>The pedal processes at 44.1 kHz. A 48 kHz capture currently runs without sample-rate conversion, so its tone and timing can differ from the original. Successful conversion does not establish faithful playback or enough processing power to combine it with other effects.</p><p>Use a computer with Effect Manager for installation. Patch Editor edits an installed effect; it does not install the NAM file.</p></details>
+<footer>Local conversion · NAMLite block engine · <a href="nam_template/NAMLite.png" download="NAMLite.png">Optional Effect Manager thumbnail</a></footer>
+</main><script src="nam_loader.js"></script><script>
+'use strict';
+const $=id=>document.getElementById(id);let manifest,current=null,generation=0,urls=[];const tplDir=()=>$('eco').checked?'nam_template_eco/':'nam_template/';
+function status(text,error=false){$('status').textContent=text;$('status').dataset.error=String(error);}
+function clearResult(){for(const u of urls)URL.revokeObjectURL(u);urls=[];$('result').hidden=true;$('downloads').replaceChildren();}
+function download(bytes,name,label,type){const url=URL.createObjectURL(new Blob([bytes],{type}));urls.push(url);const a=document.createElement('a');a.href=url;a.download=name;a.className='download';a.textContent=label;$('downloads').append(a);}
+function slots(prefer){const entries=NAMLoader.readRegistry(localStorage);const previous=prefer||Number($('slot').value)||1;$('slot').replaceChildren();for(let slot=1;slot<=(manifest?.slots?.length||NAMLoader.NAM_SLOTS);slot++){const e=entries.find(e=>e.slot===slot),o=document.createElement('option');o.value=slot;o.textContent=slot+' — '+(e?'NAMLite-'+e.shortName:'unused in this browser');$('slot').append(o);}$('slot').value=previous;slotHint();}
+function slotHint(){const e=NAMLoader.readRegistry(localStorage).find(e=>e.slot===Number($('slot').value));$('slotHint').textContent=e?'Exporting here replaces '+e.name+' when installed.':'This slot has no saved export in this browser.';}
+function changed(){generation++;clearResult();$('build').disabled=!current||!manifest;slotHint();}
+$('slot').addEventListener('change',changed);$('eco').addEventListener('change',()=>{changed();loadEngine();});$('shortname').addEventListener('input',changed);
+async function loadEngine(){try{const r=await fetch(tplDir()+'multi.json',{cache:'no-store'});if(!r.ok)throw Error('Engine files are unavailable.');manifest=await r.json();$('namVersion').textContent=manifest.output_version;slots();status('Ready. Choose a NAM capture.');$('build').disabled=!current;}catch(e){manifest=null;status(e.message+' Open this page through the local Patch Editor server.',true);}}
+$('capture').addEventListener('change',async()=>{const token=++generation;current=null;$('build').disabled=true;clearResult();const file=$('capture').files[0];if(!file)return;try{if(file.size>20*1024*1024)throw Error('This file exceeds the 20 MB limit.');const text=await file.text();if(token!==generation)return;let model;try{model=JSON.parse(text);}catch{throw Error('This is not a valid NAM JSON file.');}const s=NAMLoader.selectModel(model);current={model,text,name:file.name};const entries=NAMLoader.readRegistry(localStorage),sourceHash=await NAMLoader.sha256(new TextEncoder().encode(text));if(token!==generation)return;const existing=entries.find(e=>e.sourceSha256===sourceHash);const free=Array.from({length:manifest?.slots?.length||NAMLoader.NAM_SLOTS},(_,i)=>i+1).find(slot=>!entries.some(e=>e.slot===slot));slots(existing?.slot||free||Number($('slot').value));$('shortname').value=existing?.shortName||file.name.replace(/\.nam$/i,'').replace(/[^a-z0-9]/gi,'').replace(/^[0-9]+/,'').slice(0,8).toLowerCase();$('chosen').textContent=file.name+' · '+s.sampleRate/1000+' kHz · compatible A2 Lite';status(s.sampleRate===48000?'Compatible. This capture will run at 44.1 kHz on the pedal.':'Compatible. Choose a name and capture slot.');$('build').disabled=!manifest;}catch(e){current=null;status(e.message,true);}});
+$('build').addEventListener('click',async()=>{const token=generation,picked=current,slot=Number($('slot').value),name=$('shortname').value;if(!picked||!manifest)return;$('build').disabled=true;clearResult();status('Creating your named capture…');try{NAMLoader.shortName(name);const other=NAMLoader.readRegistry(localStorage).find(e=>e.slot!==slot&&e.shortName.toLowerCase()===name.toLowerCase());if(other)throw Error('That short name already belongs to slot '+other.slot+'. Choose another name.');const meta=manifest.slots.find(s=>s.slot===slot);const r=await fetch(tplDir()+meta.file,{cache:'no-store'});if(!r.ok)throw Error('Capture engine is unavailable.');const result=await NAMLoader.convertNamed(picked.model,await r.arrayBuffer(),manifest,slot,name);result.report.sourceFile=picked.name;result.report.eco=$('eco').checked;result.report.cost=manifest.dsp_cost;result.report.sourceSha256=await NAMLoader.sha256(new TextEncoder().encode(picked.text));if(token!==generation)return;NAMLoader.remember(localStorage,result.report);download(result.bytes,result.report.filename,'Download '+result.report.filename,'application/octet-stream');const icon=document.createElement('a');icon.href='nam_template/NAMLite.png';icon.download=result.report.filename.replace(/\.ZDL$/i,'.png');icon.className='download';icon.textContent='Effect Manager thumbnail';$('downloads').appendChild(icon);download(JSON.stringify(result.report,null,2)+'\n',result.report.name+'.json','Capture notes','application/json');$('resultTitle').textContent=result.report.name+' — ready';$('result').hidden=false;slots(slot);status('Created '+result.report.filename+' (capture slot '+slot+'). Install with Effect Manager.');}catch(e){if(token===generation)status(e.message,true);}finally{if(token===generation)$('build').disabled=!current||!manifest;}});
+loadEngine();
+</script><script src="cab_loader.js"></script><script>
+'use strict';
+(()=>{
+const $=id=>document.getElementById(id);let cabManifest=null,cabs=CabLoader.readCabs(localStorage),busy=0,cabUrls=[],worker=null,nextId=1;const waiting=new Map();
+// One-time move from the 0.20 bank (a Cab knob over 8 positions) to slots.
+try{const old=JSON.parse(localStorage.getItem('cabir-bank-v1')||'[]');if(localStorage.getItem(CabLoader.CABS_KEY)===null&&Array.isArray(old)&&old.length){cabs=old.slice(0,16).map((c,i)=>({...c,slot:i+1}));CabLoader.saveCabs(localStorage,cabs);}}catch{}
+const maxSlots=()=>cabManifest?cabManifest.slots.length:16;
+function cabStatus(text,error=false){$('cabStatus').textContent=text;$('cabStatus').dataset.error=String(error);}
+function clearCabDownloads(){for(const u of cabUrls)URL.revokeObjectURL(u);cabUrls=[];$('cabDownloads').replaceChildren();}
+function persist(){try{CabLoader.saveCabs(localStorage,cabs);}catch{}}
+function fitInBackground(buffer){
+ if(!worker){try{worker=new Worker('cab_worker.js');worker.onmessage=({data})=>{const w=waiting.get(data.id);waiting.delete(data.id);data.ok?w.resolve(data.cab):w.reject(Error(data.error));};}catch{worker=false;}}
+ if(worker===false){const f=CabLoader.fit(CabLoader.prepare(CabLoader.parseWav(buffer)));return Promise.resolve({...f});}
+ const id=nextId++;return new Promise((resolve,reject)=>{waiting.set(id,{resolve,reject});worker.postMessage({id,buffer},[buffer]);});
+}
+function plot(canvas,p){const dpr=window.devicePixelRatio||1,W=canvas.clientWidth||180,H=canvas.clientHeight||72;canvas.width=W*dpr;canvas.height=H*dpr;const g=canvas.getContext('2d');g.scale(dpr,dpr);
+ const css=getComputedStyle(document.body).color,lx=f=>W*Math.log(f/40)/Math.log(18000/40),ly=d=>H*(-d/42);g.clearRect(0,0,W,H);g.globalAlpha=.25;g.strokeStyle=css;g.lineWidth=1;
+ for(const f of [100,1000,10000]){g.beginPath();g.moveTo(lx(f),0);g.lineTo(lx(f),H);g.stroke();}g.globalAlpha=1;
+ const line=(ys,width,dash)=>{g.setLineDash(dash);g.lineWidth=width;g.beginPath();p.freqs.forEach((f,i)=>{const x=lx(f),y=Math.min(H,Math.max(0,ly(ys[i])));i?g.lineTo(x,y):g.moveTo(x,y);});g.stroke();};
+ line(p.target,3,[]);g.strokeStyle='#b0532d';line(p.model,1.5,[4,3]);g.setLineDash([]);}
+async function makeFile(c){
+ const s=cabManifest.slots.find(x=>x.slot===c.slot),r=await fetch('cab_template/'+s.file,{cache:'no-store'});if(!r.ok)throw Error('The cab engine is unavailable.');
+ return CabLoader.fillCab(await r.arrayBuffer(),cabManifest,c.slot,c,c.name);
+}
+function link(href,name,label){const a=document.createElement('a');a.href=href;a.download=name;a.className='download';a.textContent=label;$('cabDownloads').append(a);return a;}
+async function download(list){clearCabDownloads();
+ try{for(const c of list){const {bytes,report}=await makeFile(c);
+   const url=URL.createObjectURL(new Blob([bytes],{type:'application/octet-stream'}));cabUrls.push(url);
+   link(url,report.filename,report.filename).click();link('cab_template/CabIR.png',report.filename.replace(/\.ZDL$/,'.png'),report.filename.replace(/\.ZDL$/,'.png'));}
+  cabStatus(list.length===1?`Downloaded ${CabLoader.fileName(list[0].slot,list[0].name)} (CabIR-${list[0].name}, ID ${929+list[0].slot}). Install it with Effect Manager.`:
+   `Downloaded ${list.length} cab files. Install them with Effect Manager; each is a separate CabIR effect under Delay.`);}
+ catch(e){cabStatus(e.message,true);}}
+function render(){const list=$('bank');list.replaceChildren();cabs.sort((a,b)=>a.slot-b.slot);
+ for(const c of cabs){const li=document.createElement('li'),cv=document.createElement('canvas'),meta=document.createElement('div'),tools=document.createElement('div');
+  cv.setAttribute('role','img');cv.setAttribute('aria-label',`Response of ${c.name}: solid = IR, dashed = fit`);meta.className='meta';tools.className='tools';
+  const head=document.createElement('div');head.className='knob';head.textContent=`Slot ${c.slot} · ${CabLoader.fileName(c.slot,c.name)} · CabIR-${c.name}`;
+  const name=document.createElement('input');name.value=c.name;name.maxLength=8;name.setAttribute('aria-label','Cab name');
+  name.addEventListener('change',()=>{try{c.name=CabLoader.cabName(name.value);persist();clearCabDownloads();render();}catch(e){name.value=c.name;cabStatus(e.message,true);}});
+  const info=document.createElement('div');info.textContent=`${c.source||''} · ${c.sourceMs.toFixed(0)} ms · fit ${c.errorDb.toFixed(2)} dB (worst ${c.worstDb.toFixed(1)})`;
+  meta.append(head,name,info);
+  const mk=(label,title,fn)=>{const b=document.createElement('button');b.textContent=label;b.title=title;b.setAttribute('aria-label',title);b.disabled=!cabManifest;b.addEventListener('click',fn);tools.append(b);};
+  mk('↓','Download this cab file',()=>download([c]));
+  mk('✕','Remove (frees the slot)',()=>{cabs=cabs.filter(x=>x!==c);persist();clearCabDownloads();render();cabStatus(`Removed ${c.name}. Slot ${c.slot} is free; also remove ${CabLoader.fileName(c.slot,c.name)} in Effect Manager.`);});
+  li.append(cv,meta,tools);list.append(li);plot(cv,c.plot);}
+ $('buildCab').disabled=!cabManifest||!cabs.length||busy>0;
+}
+$('irs').addEventListener('change',async()=>{const files=[...$('irs').files];$('irs').value='';clearCabDownloads();
+ for(const file of files){if(!CabLoader.freeSlot(cabs,maxSlots())){cabStatus(`All ${maxSlots()} cab slots are used. Remove one first.`,true);break;}
+  busy++;render();cabStatus(`Fitting ${file.name}…`);
+  try{if(file.size>20*1024*1024)throw Error(file.name+' exceeds 20 MB.');const cab=await fitInBackground(await file.arrayBuffer());
+   // Another import may have finished during the fit. Allocate and insert
+   // together, without an await between them, so concurrent imports stay unique.
+   const slot=CabLoader.freeSlot(cabs,maxSlots());
+   if(!slot)throw Error(`All ${maxSlots()} cab slots are used. Remove one first.`);
+   let name=file.name.replace(/\.wav$/i,'').replace(/[^a-z0-9]/gi,'').slice(0,8).toLowerCase()||('cab'+slot);
+   if(!/^[a-z0-9]/.test(name))name='cab'+slot;
+   cabs.push({...cab,slot,source:file.name,name});persist();
+   cabStatus(`${file.name}: fitted to ${cab.errorDb.toFixed(2)} dB, slot ${slot}. Rename it if you like, then download.`);}
+  catch(e){cabStatus(`${file.name}: ${e.message}`,true);}finally{busy--;render();}}});
+$('buildCab').addEventListener('click',()=>download(cabs));
+(async()=>{try{const r=await fetch('cab_template/cab.json',{cache:'no-store'});if(!r.ok)throw Error('The cab engine is unavailable.');cabManifest=await r.json();
+ cabStatus(cabs.length?`${cabs.length} cab${cabs.length>1?'s':''} in this browser. Add more or download.`:'Ready. Add cabinet IRs.');}
+ catch(e){cabStatus(e.message+' Open this page through the local Patch Editor server.',true);}render();})();
+})();
+</script></body></html>

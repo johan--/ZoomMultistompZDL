@@ -1,5 +1,6 @@
 """Short hardware headings, with full names retained in the editor and DSP ABI."""
 PEDAL_NAMES={
+ 'Tonic':{'Amount':'Amnt'},
  'Arrakis':{'Detune':'Detun'},
  'Dissolve':{'Chance':'Chnce','Glitch':'Gltch'},
  'Dustbox':{'Filter':'Filt'},

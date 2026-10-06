@@ -1,0 +1,204 @@
+{
+  "format": 2,
+  "engine": "CabIR 0.30: one cab per file, 32-tap FIR + 6 biquads, Reso/Pres",
+  "output_version": "0.30",
+  "version_offset": 68,
+  "taps": 32,
+  "biquads": 6,
+  "sample_rate": 44100,
+  "dsp_cost": 10.0,
+  "params": [
+    "Mix",
+    "Level",
+    "Reso",
+    "Pres"
+  ],
+  "reso": {
+    "freq": 140.0,
+    "q": 1.0,
+    "range_db": 6.0
+  },
+  "pres": {
+    "freq": 2800.0,
+    "q": 0.8,
+    "range_db": 6.0
+  },
+  "slots": [
+    {
+      "slot": 1,
+      "fxid": 930,
+      "file": "slot-01.bin",
+      "fir_offset": 8932,
+      "sos_offset": 9060,
+      "gain_offset": 8924,
+      "name_offset": 8400,
+      "bytes": 15450,
+      "sha256": "df293e8ee16c1f3cc0e635d3f5aaa1f515a673068d2807ce824e2703cbd83515"
+    },
+    {
+      "slot": 2,
+      "fxid": 931,
+      "file": "slot-02.bin",
+      "fir_offset": 8932,
+      "sos_offset": 9060,
+      "gain_offset": 8924,
+      "name_offset": 8400,
+      "bytes": 15450,
+      "sha256": "6860ed9782879982674b9828b7c64c368841fdb7fc05f1609298bc7a1497d4c3"
+    },
+    {
+      "slot": 3,
+      "fxid": 932,
+      "file": "slot-03.bin",
+      "fir_offset": 8932,
+      "sos_offset": 9060,
+      "gain_offset": 8924,
+      "name_offset": 8400,
+      "bytes": 15450,
+      "sha256": "87aa529903c91c7c31c4585a3d3567d1dae76d9b28c86be0d9ad5496404a7fbd"
+    },
+    {
+      "slot": 4,
+      "fxid": 933,
+      "file": "slot-04.bin",
+      "fir_offset": 8932,
+      "sos_offset": 9060,
+      "gain_offset": 8924,
+      "name_offset": 8400,
+      "bytes": 15450,
+      "sha256": "bfc0cdfd4740caef5b5c1204cbf48bffa5a3a0644588df7f2004ceb830e368f7"
+    },
+    {
+      "slot": 5,
+      "fxid": 934,
+      "file": "slot-05.bin",
+      "fir_offset": 8932,
+      "sos_offset": 9060,
+      "gain_offset": 8924,
+      "name_offset": 8400,
+      "bytes": 15450,
+      "sha256": "18b953cafa7a9390d5d90a293ab4046c07adb88cd04fe7a79507e8f4a6ae146b"
+    },
+    {
+      "slot": 6,
+      "fxid": 935,
+      "file": "slot-06.bin",
+      "fir_offset": 8932,
+      "sos_offset": 9060,
+      "gain_offset": 8924,
+      "name_offset": 8400,
+      "bytes": 15450,
+      "sha256": "6063599d7d24dc96df92f2dfe1d0adbcd16864d2199e252a210e97bf043414ea"
+    },
+    {
+      "slot": 7,
+      "fxid": 936,
+      "file": "slot-07.bin",
+      "fir_offset": 8932,
+      "sos_offset": 9060,
+      "gain_offset": 8924,
+      "name_offset": 8400,
+      "bytes": 15450,
+      "sha256": "589ba47a77a4b5563429d568af595a1e99daa6455b6088a97faea797132d8d26"
+    },
+    {
+      "slot": 8,
+      "fxid": 937,
+      "file": "slot-08.bin",
+      "fir_offset": 8932,
+      "sos_offset": 9060,
+      "gain_offset": 8924,
+      "name_offset": 8400,
+      "bytes": 15450,
+      "sha256": "8c3aea17580e4369d3dca8019768b441d077bccf636bd0ce4a4f3215d65f19ce"
+    },
+    {
+      "slot": 9,
+      "fxid": 938,
+      "file": "slot-09.bin",
+      "fir_offset": 8932,
+      "sos_offset": 9060,
+      "gain_offset": 8924,
+      "name_offset": 8400,
+      "bytes": 15450,
+      "sha256": "862462532a47e39bea0f764df48ae8765923464b1b546e82a38fabb06b8988b1"
+    },
+    {
+      "slot": 10,
+      "fxid": 939,
+      "file": "slot-10.bin",
+      "fir_offset": 8932,
+      "sos_offset": 9060,
+      "gain_offset": 8924,
+      "name_offset": 8400,
+      "bytes": 15450,
+      "sha256": "d1941108a14a92ccd7172a38ef45e350c581f5dcc82dc34889e2795e97ad5b64"
+    },
+    {
+      "slot": 11,
+      "fxid": 940,
+      "file": "slot-11.bin",
+      "fir_offset": 8932,
+      "sos_offset": 9060,
+      "gain_offset": 8924,
+      "name_offset": 8400,
+      "bytes": 15450,
+      "sha256": "74f875b7a94897414554d400845050a354d1bad5d41555c2ec6a4c6dd458885c"
+    },
+    {
+      "slot": 12,
+      "fxid": 941,
+      "file": "slot-12.bin",
+      "fir_offset": 8932,
+      "sos_offset": 9060,
+      "gain_offset": 8924,
+      "name_offset": 8400,
+      "bytes": 15450,
+      "sha256": "ae70ab276c3eb5cff0a75fef7cf326545e22bb1884cc4e442b2fcf1ecc80326e"
+    },
+    {
+      "slot": 13,
+      "fxid": 942,
+      "file": "slot-13.bin",
+      "fir_offset": 8932,
+      "sos_offset": 9060,
+      "gain_offset": 8924,
+      "name_offset": 8400,
+      "bytes": 15450,
+      "sha256": "82649cf121febdcdc47ada2099231424fbe4be668af28096396c9ce6055c16e5"
+    },
+    {
+      "slot": 14,
+      "fxid": 943,
+      "file": "slot-14.bin",
+      "fir_offset": 8932,
+      "sos_offset": 9060,
+      "gain_offset": 8924,
+      "name_offset": 8400,
+      "bytes": 15450,
+      "sha256": "d921d2077fdd069d2578e7de8f3271ba9ef8a4202829adecc5c84011dc88c99e"
+    },
+    {
+      "slot": 15,
+      "fxid": 944,
+      "file": "slot-15.bin",
+      "fir_offset": 8932,
+      "sos_offset": 9060,
+      "gain_offset": 8924,
+      "name_offset": 8400,
+      "bytes": 15450,
+      "sha256": "cb5d562335062267e6ff6b272d21f1cc5d359ddaa7883d42a0bba3cfdffe8119"
+    },
+    {
+      "slot": 16,
+      "fxid": 945,
+      "file": "slot-16.bin",
+      "fir_offset": 8932,
+      "sos_offset": 9060,
+      "gain_offset": 8924,
+      "name_offset": 8400,
+      "bytes": 15450,
+      "sha256": "73747f194b2592443f10db73ffbbb92da9f0764850e8b688844c01a90e67093c"
+    }
+  ]
+}

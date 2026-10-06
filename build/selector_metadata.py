@@ -19,6 +19,10 @@ def groups(labels, classify, maximum=100):
     return result
 
 SELECTORS={
+ 'Tonic':{
+   'Mode':groups(['Decim','Crush','FM','Ring'],lambda r:ladder(r,[.25,.5,.75])),
+   'Order':groups(['Fwd','Rev'],lambda r:ladder(r,[.5])),
+ },
  'Rooms6':{'Mode':groups(['Room','Digit','Peak','Gate','Wave','Gong'],lambda r:r,5)},
  'Rooms':{'Mode':groups(['Room','Digit','Peak','Gate','Wave','Gong'],lambda r:min(5,int(f32(normalized(r)*f32(5.999)))))},
  'Spool':{'Div':groups(['1/16','1/8T','1/8','1/8.','1/4','1/4.'],lambda r:ladder(r,[.16666667,.33333334,.5,.6666667,.8333333]))},

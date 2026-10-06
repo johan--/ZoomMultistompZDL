@@ -45,6 +45,17 @@ crossfade. Those are by-ear calibration points, not derived constants.
 
 ## Sound previews
 
+### Experimental addition: Tonic
+
+[Tonic](src/custom/tonic/README.md) is a separate Bitters-inspired effect with
+distortion, a phaser, four selectable processors (Decim, Crush, FM, Ring), and
+forward/reverse routing. It has its own PE controls, pedal graphic, and Effect
+Manager thumbnail. `dist/Tonic.ZDL` is available for local testing; hardware
+validation is pending, so it is not yet part of the 22-effect release pack.
+Rewire and its saved-patch controls are unchanged.
+
+### Release pack samples
+
 All **22 effects now have samples**. Open a WAV link to play or download it.
 These are desktop renders, **not recordings from the pedal**.
 

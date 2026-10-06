@@ -29,3 +29,28 @@ build/probes/
 
 # local per-effect safety backups
 src/custom/*/backup_v1/
+
+# Experimental/diagnostic ZDLs staged in dist/ for convenient Effect Manager
+# upload. dist/ is what the install docs tell people to point Effect Manager at,
+# so these must never be committed -- a stray diagnostic ends up on a stranger's
+# pedal. build_all.py's stray-probe guard only knows about plugins registered in
+# DIAGNOSTIC_PLUGINS, and these are not, so it cannot catch them. A `git add -A`
+# would otherwise sweep them straight in.
+# NAM captures (dist/NAMLite-<name>.ZDL) also embed a user's private capture
+# weights, so they must never be committed either.
+dist/NAM*
+dist/CabIR.*
+
+# Archived NAM trial builds. They embed a user's private capture weights, so they
+# must never be committed (the loader templates in tools/nam_template/ are
+# capture-free; these are not).
+build/nam-archive/
+# HYBRID IR test bank: inherited Zoom runtime + a user-supplied commercial IR (not redistributable)
+dist/IRMesa*
+build/ir-archive/
+# CabIR cab files: fits of user-owned IRs, not redistributable
+dist/C[0-9][0-9]*
+# Built from a private capture (amptrec weights)
+build/capture-art/*.ZDL
+# local test-host build artifact
+build/tonic-validation/host.so

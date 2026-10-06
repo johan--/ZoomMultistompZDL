@@ -73,7 +73,9 @@ DIAGNOSTIC_PLUGINS = [
     ("matprobe",    PROBE_DIR / "matprobe"    / "build.py"),
 ]
 
-PLUGINS = RELEASE_PLUGINS + DIAGNOSTIC_PLUGINS
+# Explicit builds only until hardware listening confirms these effects.
+EXPERIMENTAL_PLUGINS = [("tonic", CUSTOM_DIR / "tonic" / "build.py")]
+PLUGINS = RELEASE_PLUGINS + DIAGNOSTIC_PLUGINS + EXPERIMENTAL_PLUGINS
 
 
 def check_dist_filenames() -> int:
@@ -202,7 +204,9 @@ def main(argv: list[str]) -> int:
         db_rc = 1
         print(f"\neffect DB sync could not run: {exc}", file=sys.stderr)
 
-    return name_check_rc or probe_check_rc or db_rc
+    # Effect Manager loads these same-name PNGs alongside folder ZDLs.
+    thumb_rc = subprocess.call([sys.executable, str(ROOT / "build" / "make_em_thumbnails.py")])
+    return name_check_rc or probe_check_rc or db_rc or thumb_rc
 
 
 if __name__ == "__main__":

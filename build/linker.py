@@ -325,6 +325,14 @@ class LinkerConfig:
     # see docs/INIT-MATERIALIZATION.md and _init_materialize_body above.
     materialize_init: bool = False
 
+    # Descriptor self-entry +0x28: the DSP cost the firmware adds up per patch;
+    # the community-measured MS-70CDR budget is ~230 ("DSP Full" above it;
+    # github.com/Leemuzhko/ZOOM_development NAM/sdk/docs/DSP_COST_230_HYPOTHESIS).
+    # Stock effects declare 11.6 (ParaEQ) .. 127.7 (DriveEcho); 20.0 was a
+    # placeholder for everything. Heavy effects should declare their real share
+    # so the pedal refuses an overloaded chain instead of letting it crackle.
+    dsp_cost: float = 20.0
+
     def __post_init__(self) -> None:
         # ZDL_MATERIALIZE_INIT=1 flips this on for EVERY effect in one build, so a
         # candidate _init can be run through the emulator (matcheck) across the
@@ -553,6 +561,7 @@ def _build_descriptor(
     onf_func_va: int,
     knob_edit_vas: list[int],
     params: list[Param],
+    dsp_cost: float = 20.0,
 ) -> tuple[bytes, list[tuple[int, int]]]:
     """Returns (descriptor_bytes, [(offset_in_desc, target_va), ...])."""
     assert len(knob_edit_vas) == len(params), (
@@ -585,7 +594,7 @@ def _build_descriptor(
     # imageInfo declare them. See docs/3-PARAM-LINKER-BUG.md.
     # 20.0f (0x41a00000) is in the typical range for simple effects
     # (Exciter=19.51, OptComp=30.76, BitCrush=14.88, AutoPan=13.89).
-    entry[0x28:0x2C] = struct.pack('<f', 20.0)
+    entry[0x28:0x2C] = struct.pack('<f', float(dsp_cost))
     relocs.append((len(desc) + 0x1C, init_func_va))
     relocs.append((len(desc) + 0x20, audio_func_va))
     desc.extend(entry)
@@ -907,6 +916,11 @@ def _build_dll(desc_entry_count: int) -> bytes:
 
 def link(cfg: LinkerConfig) -> None:
     """Build cfg.output_path from cfg.obj_path."""
+    # 9 user controls (params[5..13]) is the hardware-confirmed ABI; a 10th
+    # leaked values into the neighbouring effect's state on the MS-70CDR
+    # (github.com/Leemuzhko/ZOOM_development SDK/LIMITS.md, FDRTAIL/page-4).
+    if len(cfg.params) > 9:
+        raise ValueError(f"{cfg.effect_name}: {len(cfg.params)} controls; the pedal supports at most 9")
     if os.environ.get("ZDL_SELECTOR_OUTPUT_DIR"):
         cfg.output_path = str(Path(os.environ["ZDL_SELECTOR_OUTPUT_DIR"]) / Path(cfg.output_path).name)
         Path(cfg.output_path).parent.mkdir(parents=True, exist_ok=True)
@@ -1241,6 +1255,7 @@ def link(cfg: LinkerConfig) -> None:
         onf_func_va=onf_va,
         knob_edit_vas=knob_edit_vas,
         params=cfg.params,
+        dsp_cost=cfg.dsp_cost,
     )
     # Stock RNDMFLTR descriptor +0x24 holds GetString(value, destination).
     # Object-defined callbacks are opt-in via generated parameter headers.

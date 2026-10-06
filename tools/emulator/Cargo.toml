@@ -20,6 +20,10 @@ path = "src/main.rs"
 name = "matcheck"
 path = "src/bin/matcheck.rs"
 
+[[bin]]
+name = "namstate"
+path = "src/bin/namstate.rs"
+
 [dependencies]
 ziddle-emu = { path = "../emu" }
 ziddle-formats = { path = "../formats" }

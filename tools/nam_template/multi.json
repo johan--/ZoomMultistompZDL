@@ -1,0 +1,172 @@
+{
+  "format": 2,
+  "engine": "NAMLite engine 0.25: full rate, exact interleaved rings, register-accumulated taps, fast I/O, Bass/Mid/Treb, Gate",
+  "weights_count": 1871,
+  "version_offset": 68,
+  "output_version": "0.25",
+  "sample_rate": 44100,
+  "dsp_cost": 194.0,
+  "eco": false,
+  "slots": [
+    {
+      "slot": 1,
+      "fxid": 900,
+      "id": 526096,
+      "file": "slot-1.bin",
+      "bytes": 29190,
+      "sha256": "3c50e5f36aa295e17a9f4af61be77522165d260bc907b37bf5717f8ab38ee0a8",
+      "weights_offset": 15300,
+      "name_offset": 14636
+    },
+    {
+      "slot": 2,
+      "fxid": 901,
+      "id": 657168,
+      "file": "slot-2.bin",
+      "bytes": 29190,
+      "sha256": "ac392869b3d5766287fb852b915bf401f806411c250b321074efe6b3c6b661ea",
+      "weights_offset": 15300,
+      "name_offset": 14636
+    },
+    {
+      "slot": 3,
+      "fxid": 902,
+      "id": 788240,
+      "file": "slot-3.bin",
+      "bytes": 29190,
+      "sha256": "695d08f6a0759af4ba6371b49dfe1112a43c6dfa632b8e394243da44d6c03fa5",
+      "weights_offset": 15300,
+      "name_offset": 14636
+    },
+    {
+      "slot": 4,
+      "fxid": 903,
+      "id": 919312,
+      "file": "slot-4.bin",
+      "bytes": 29190,
+      "sha256": "7ad8ad2198391d0b0b81823c95aa87638634bada70c207cd888fa40014b910e5",
+      "weights_offset": 15300,
+      "name_offset": 14636
+    },
+    {
+      "slot": 5,
+      "fxid": 904,
+      "id": 1050384,
+      "file": "slot-5.bin",
+      "bytes": 29190,
+      "sha256": "b7c5510066fd305cd25cff326c4cc6076bb46c1506c642a9a061690d4f555080",
+      "weights_offset": 15300,
+      "name_offset": 14636
+    },
+    {
+      "slot": 6,
+      "fxid": 905,
+      "id": 1181456,
+      "file": "slot-6.bin",
+      "bytes": 29190,
+      "sha256": "ed334341b440f717eec1ee44fd809e5f83fa4d3936a640d3f1444b8a45162903",
+      "weights_offset": 15300,
+      "name_offset": 14636
+    },
+    {
+      "slot": 7,
+      "fxid": 906,
+      "id": 1312528,
+      "file": "slot-7.bin",
+      "bytes": 29190,
+      "sha256": "ac4624157b900c3bd560e33c12cb5b35c585d833f9909e52239cc0f088066f65",
+      "weights_offset": 15300,
+      "name_offset": 14636
+    },
+    {
+      "slot": 8,
+      "fxid": 907,
+      "id": 1443600,
+      "file": "slot-8.bin",
+      "bytes": 29190,
+      "sha256": "1ee0d34bda5d2cfaec4c1cf2ebf4b0b6c88631b90b01cbeb861848062e8a40f0",
+      "weights_offset": 15300,
+      "name_offset": 14636
+    },
+    {
+      "slot": 9,
+      "fxid": 950,
+      "id": 7079696,
+      "file": "slot-9.bin",
+      "bytes": 29190,
+      "sha256": "588574653b7e2ac737051b8233169cbc6adfc50431993df0b70bbd5b008fbeb1",
+      "weights_offset": 15300,
+      "name_offset": 14636
+    },
+    {
+      "slot": 10,
+      "fxid": 951,
+      "id": 7210768,
+      "file": "slot-10.bin",
+      "bytes": 29186,
+      "sha256": "b405c8b1d6295bde7f528be14605cf8a9c34c05fce233ea215396249ceb8061f",
+      "weights_offset": 15300,
+      "name_offset": 14636
+    },
+    {
+      "slot": 11,
+      "fxid": 952,
+      "id": 7341840,
+      "file": "slot-11.bin",
+      "bytes": 29186,
+      "sha256": "aef0e2d8cafee5c36b5487967e6dcc3710bc0d1aade6a3ea71b3bc70c9f48365",
+      "weights_offset": 15300,
+      "name_offset": 14636
+    },
+    {
+      "slot": 12,
+      "fxid": 953,
+      "id": 7472912,
+      "file": "slot-12.bin",
+      "bytes": 29186,
+      "sha256": "22cd5aca8f747cbfeaeacefec6e2e346d449200d35bef37d525c5af5c69ac5be",
+      "weights_offset": 15300,
+      "name_offset": 14636
+    },
+    {
+      "slot": 13,
+      "fxid": 954,
+      "id": 7603984,
+      "file": "slot-13.bin",
+      "bytes": 29186,
+      "sha256": "4d817c4a1c9755979c8d2ba17dd6d2cfd0dd1a8b92d0aa128b143d3dfb10a156",
+      "weights_offset": 15300,
+      "name_offset": 14636
+    },
+    {
+      "slot": 14,
+      "fxid": 955,
+      "id": 7735056,
+      "file": "slot-14.bin",
+      "bytes": 29186,
+      "sha256": "06b855ce715e05510d9eae512c8ea45d6dd0c996adb6802620f4e9aa2a9720da",
+      "weights_offset": 15300,
+      "name_offset": 14636
+    },
+    {
+      "slot": 15,
+      "fxid": 956,
+      "id": 7866128,
+      "file": "slot-15.bin",
+      "bytes": 29186,
+      "sha256": "d93222a17a7c1432cd27fb82911db54a11d82e11b4ce9597cd336e267d5b6b4d",
+      "weights_offset": 15300,
+      "name_offset": 14636
+    },
+    {
+      "slot": 16,
+      "fxid": 957,
+      "id": 7997200,
+      "file": "slot-16.bin",
+      "bytes": 29186,
+      "sha256": "454a8c62f05ea024011abe890127cab7b81c090f9ddda854a3fe5e90d4e4742a",
+      "weights_offset": 15300,
+      "name_offset": 14636
+    }
+  ]
+}

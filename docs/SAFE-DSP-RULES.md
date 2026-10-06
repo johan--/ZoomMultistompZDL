@@ -52,6 +52,27 @@ experiment, not a port.
 * Use release ZDL filenames with unique basenames of 8 characters or less.
   Zoom tooling/device code can truncate longer basenames, and duplicate
   post-trim names have been reported to freeze the pedal when loading.
+  **Confirmed on hardware 2026-09-29:** `NAMLite-amptrec.ZDL` + `NAMLite-smokey.ZDL`
+  (both `NAMLite-`) froze the pedal on boot; each alone was fine.
+  `build/extract_effect_db.py` now refuses to run over such a dist/.
+* **Declare an honest DSP cost** (`LinkerConfig.dsp_cost`, descriptor self-entry
+  +0x28). The firmware sums it per patch and shows "DSP Full" above ~230
+  (community measurement, MS-70CDR 2.10: github.com/Leemuzhko/ZOOM_development,
+  NAM/sdk/docs/DSP_COST_230_HYPOTHESIS_RU.md). Stock effects declare 11.6-127.7
+  (median 25; Great Muff 30.43). The linker default 20.0 is a placeholder: a
+  heavy effect declaring 20 lets the pedal build a chain that overloads and
+  crackles instead of refusing it. NAM declares 194 (full) / 188 (Eco 7/8) /
+  177 (Eco 6/8), CabIR 10. THIS pedal's limit, measured with pass-through
+  probes declaring a fixed cost next to Great Muff (30.43): 224.4 accepted,
+  228.4 refused -- below the ~230 reported elsewhere. PE's meter uses 228. The same research also confirmed our size cap (~30 KB
+  code+data, layout-dependent) and a 9-control maximum.
+* **Size cap: keep a ZDL at or under 32,126 bytes (code+data 29,576).**
+  Confirmed on hardware 2026-09-30/10-02: everything up to those sizes loaded;
+  NAM 0.24 (32,998 / 30,336) froze the pedal on load, and so did TSize2 -- the
+  working NAM 0.23 padded with dead data to 33,174 / 30,512 -- so it is size,
+  not code. The real cap lies in between (a 32 KB = 32,768-byte file limit
+  fits). `build/zdl_size_guard.py` enforces the proven sizes; the dist/ DB
+  build, the NAM template packager and the trial builder all call it.
 * **Never use a `switch` (or a dense `if/else` on an int) in `.audio` code.**
   The compiler lowers it to a jump table: a `.switch:<func>` section of
   absolute code addresses reached by an INDIRECT branch (`B An`/`B Bn`). Those

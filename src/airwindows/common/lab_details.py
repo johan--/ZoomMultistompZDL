@@ -95,6 +95,8 @@ def apply(c,name):
  elif name=='Oxide':
   glyph(c,'Ф',19,13,0);glyph(c,'?',101,14,0)
   for x in (7,120):screw(c,x,3)
+ elif name=='Tonic':
+  glyph(c,'?',117,19);screw(c,5,4);screw(c,122,31)
  elif name=='Rewire':
   jack(c,122,28);glyph(c,'?',91,12)
   line(c,(110,6),(116,3));line(c,(116,3),(122,3))
@@ -108,7 +110,7 @@ def apply(c,name):
  elif name=='Taffy':
   glyph(c,'И',10,14);glyph(c,'?',113,14);ticks(c,42,86,33)
  # Several panels use the main console's ivory field instead of all-dark art.
- if name in {'Arrakis','Galactic','Howl','Hydra','Rewire','Scorch','Gyre'}:
+ if name in {'Arrakis','Galactic','Howl','Hydra','Rewire','Scorch','Gyre','Tonic'}:
   for y in range(1,35):
    for x in range(1,127):c.px(x,y,1-c.pixels[y][x])
   # Small mounting slots anchor the illustrated panel to the instrument face.

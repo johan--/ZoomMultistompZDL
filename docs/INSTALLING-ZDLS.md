@@ -71,3 +71,23 @@ but stay hidden in the pedal's on-device FX browser if no stock Drive effect is
 installed. If `ToTape9.ZDL` writes successfully but does not appear while
 scrolling effects, also install at least one stock Drive effect. With a stock
 Drive effect present, the custom Drive effect has been reported visible.
+
+## Effect Manager thumbnails
+
+The `dist/` folder includes a matching PNG for every effect. Keep the PNG beside
+its ZDL with the same basename, for example `Stasis.ZDL` and `Stasis.png`.
+Restart Effect Manager after adding or changing these files; it reads the folder
+at startup. Thumbnails do not require rewriting effects to the pedal.
+
+To regenerate thumbnails from the actual embedded artwork:
+
+```sh
+python3 build/make_em_thumbnails.py
+```
+
+Icons use the bundled Effect Manager format: 128×96 RGBA with opaque black
+artwork and a transparent background. Opaque RGB images can display as solid
+tinted blocks. The cover inside preserves the pedal display proportions.
+The PNGs affect Effect Manager
+only; the ZDL already contains the pedal's own artwork. See the
+[Effect Manager folder documentation](https://zoomeffectmanager.com/en/posts/reading-effects-from-folder/).

@@ -26,6 +26,66 @@ Zoom Effect Manager installs the effects. See the [installation guide](docs/INST
 * **Not supported:** **MS-100BT** and **Plus models**, including **MS-50G+,
   MS-60B+ and MS-70CDR+**. See [Compatibility](#compatibility) below.
 
+## Custom NAM captures and cabinets (experimental)
+
+Load your own amp captures ([NAM](https://www.neuralampmodeler.com/)) and
+speaker cabinets (IRs) onto the pedal. Everything runs in your browser — no
+compiler, nothing uploaded anywhere.
+
+**How to use it**
+
+1. Open the [NAM + Cab Loader](tools/nam_loader.html) (Patch Editor
+   **Settings → Custom NAM captures**, with the local editor running).
+2. **Amp:** drop in an A2 Lite `.nam` file, give it a short name, pick a slot,
+   download the `.ZDL`. Tick **Eco** if you want it lighter on the DSP (see below).
+3. **Cab:** drop in an IR `.wav` (44.1 or 48 kHz). The loader fits it to a
+   small filter the pedal can afford and gives you a `.ZDL`.
+4. Install the files with Zoom Effect Manager. They appear in Patch Editor
+   under the names you chose, as `NAM-<name>` and `CAB-<name>` on the pedal.
+
+**Slots.** 16 amp slots and 16 cab slots, each with its own effect ID, so you
+can keep several installed side by side. Putting a new capture in a used slot
+replaces the old one (patches that used that slot pick up the new sound).
+Filenames encode the slot so they never collide: `NAM4smok.ZDL`,
+`C01sm57.ZDL`. Names must start with a letter.
+
+**Knobs.**
+
+| Effect | Knobs |
+|---|---|
+| NAM | Input, Output, Mix, Bass, Mid, Treb, Gate (noise gate; 0 = off) |
+| CabIR | Mix, Level, Reso (low-end resonance), Pres (presence) |
+
+**DSP budget.** The pedal refuses a patch (shows `DSP full`) once the summed
+cost of its effects goes over about 225. Patch Editor now has a **DSP meter**
+in the toolbar that adds up the chain for you (amber from 80%, red when the
+pedal will refuse it).
+
+| Effect | Declared cost | Notes |
+|---|---|---|
+| NAM, full rate | 194 | Best sound. Leaves room for one light effect (a drive, a cab). |
+| NAM, Eco | 177 | Runs the model on 6 of every 8 samples. Slightly darker top end. |
+| CabIR | 10 | 32-tap filter + 6 EQ bands; fits next to any NAM. |
+
+**What works.** A2 Lite captures only (the small standard NAM architecture).
+Larger NAM models don't fit this DSP. Captures trained at 48 kHz work, but
+retraining at 44.1 kHz (the pedal's rate) is closer to the real amp; we used
+[NAM ReTrainer](https://github.com/Leemuzhko/NeuralAmpModeler-ReTrainer) by Leemuzhko for
+that. The cab fit follows the Hybrid IR idea, also from
+[Leemuzhko](https://github.com/Leemuzhko/HYBRID-IR): a short filter plus a few
+EQ bands instead of a long IR, so a cab costs almost nothing.
+
+**Your captures stay yours.** `.nam` files, fitted cabs and the `.ZDL` files
+built from them are gitignored (`dist/NAM*`, `dist/C[0-9][0-9]*`, archives).
+The templates in `tools/nam_template*/` and `tools/cab_template/` hold no
+capture data — the loader only fills in the weights and the name.
+
+See [the loader guide](docs/NAM-LOADER.md) for details,
+[docs/NAM-RUNTIME-INVESTIGATION.md](docs/NAM-RUNTIME-INVESTIGATION.md) for how
+the engine was made to fit, and
+[src/hardware_probes/cab_ir/README.md](src/hardware_probes/cab_ir/README.md)
+for the cab engine.
+
 ## Quickstart — edit your pedal from the browser
 
 **[▶ Open the Patch Editor](https://themanro.github.io/ZoomMultistompZDL/tools/patch_editor.html)**
@@ -200,9 +260,11 @@ not saved HTML pages -- see
 
 - Effect Manager does **not replace** an installed effect with the same fxid —
   remove the old one from the device, re-read the folder, then add the new one.
-- Effect Manager's browser **thumbnails** come from the app's internal stock
-  database; custom effects always show its generic pedal icon. The covers in
-  this repo control the **pedal's screen**, which is what matters live.
+- Effect Manager reads custom **thumbnails** from matching PNG files beside the
+  ZDLs (for example, `Rooms.ZDL` and `Rooms.png`). Keep both files together and
+  restart Effect Manager after updating them. These thumbnails use the same
+  artwork as the pedal. PNG files are for the manager; they are not installed
+  on the pedal.
 - `FS.bin size mismatch` when writing = too many effects installed (storage
   overflow). `DSP full` = the per-patch processing budget is blown — run heavy
   effects (Microloom, Galactic, Spool) one per patch.
@@ -218,14 +280,35 @@ More detailed install notes live in [docs/INSTALLING-ZDLS.md](docs/INSTALLING-ZD
 | Device family | Status |
 |---|---|
 | Zoom MS-70CDR firmware 2.10 | Primary hardware target; the release effects are developed and play-tested against this pedal. |
-| Other ZDL-based Zoom MultiStomp pedals (MS-50G, MS-60B, G1on/G1Xon, B1on/B1Xon) | Should load compatible ZDLs, but unconfirmed — hardware reports welcome. |
+| Other ZDL-based Zoom pedals (MS-50G, MS-60B, G1on/G1Xon, B1on/B1Xon) | Compatible family, awaiting confirmation — hardware reports welcome. |
+| Original G3/G3X, G5, B3 and A3 | Share the ZFX-IV DSP family, but this project's custom effects and Patch Editor are not currently supported or validated on them. |
 | Newer Zoom ZD2-based pedals | Not supported by these ZDL builds. |
 
+**Does sharing the processor mean my pedal can run these effects?** It makes
+porting worth investigating, but does not establish compatibility. Zoom's
+**ZFX-IV** name identifies a DSP family; it does not establish identical chip
+revisions, memory or clock speeds across every model. Installing custom effects
+also depends on the pedal's firmware and effect format, while Patch Editor
+support depends on its MIDI messages and patch layout.
+
+Sources for the shared DSP family:
+
+* **G3/G3X, G5, B3 and A3:** Zoom explicitly identifies ZFX-IV in its
+  [2015 effects catalogue](https://zoomrussia.ru/manuals/FX_Catalog_E.pdf).
+  The [G3/G3X operation manual](https://zoomcorp.com/media/documents/G3_G3X_operationManual_English.pdf)
+  also confirms it. These are the original models, not the later **G3n/G3Xn,
+  G5n or B3n**.
+* **MS-50G and MS-60B:** a community
+  [motherboard comparison during a rehousing](https://www.reddit.com/r/zoommultistomp/comments/mggluh/rehoused_an_ms50g_into_a_black_ms60b/)
+  reports ZFX-IV markings on both boards. This is hardware evidence, not a
+  confirmation that our effects or editor have been tested on both pedals.
+
 **The "+" models (MS-50G+, MS-60B+, MS-70CDR+) use ZD2, not ZDL**, so nothing
-here loads on them. Whether they could ever be targeted turns on one question:
-is the payload analysable, or is it signed/encrypted? The evidence so far is
-encouraging — `docs/STATE-ABI-PROGRESS.md` records a hand-decoded ZD2
-`Fx_SFX_LineSel`, which means somebody read ZD2 machine code and understood it.
+in `dist/` loads on them. Custom ZD2 effects are now demonstrated on the
+MS-70CDR+ by [Stomphacks](https://github.com/thammer/stomphacks), including a
+C-to-ZD2 build pipeline. Our pack and Patch Editor have not been ported.
+See [ZD2 research notes](docs/ZD2-PORT-NOTES.md) for the evidence, remaining
+memory/interface questions, and proposed next steps.
 
 **Step-by-step guide: [docs/PROBING-A-NEW-PEDAL.md](docs/PROBING-A-NEW-PEDAL.md).**
 Two things anyone with a "+" pedal can check, neither of which risks the
@@ -241,10 +324,9 @@ hardware:
   one pedal, so writing elsewhere would scramble patches. If a "+" pedal answers
   `Reload bank` with a patch dump, that alone is worth reporting.
 
-Worth being clear about why the MS-70CDR is hackable at all: Zoom themselves
-ship a tool that writes effect binaries to it. None of this is an exploit. The
-question for the "+" models is whether an official write path still exists, not
-whether the format can be understood.
+A working ZD2 build and USB-MIDI installation path has been demonstrated by
+Stomphacks on the MS-70CDR+. Other models and our effects still require their
+own validation; readable ELF data alone does not prove install compatibility.
 
 ## What We Learned (field notes)
 
@@ -271,10 +353,15 @@ deep versions live in [docs/](docs/) and [build/ABI.md](build/ABI.md).
   hardware-probed to **≥705,536 bytes** — Lush-class (512 KB) and Spool-class
   (545 KB) states load fine. Always bounds-check the descriptor and clear big
   buffers lazily in chunks.
-- The linker currently advertises a hardcoded CPU cost (20.0) while stock
-  effects declare 11.6–128, so the firmware can green-light patches the DSP
-  can't actually run. Symptoms range from `DSP full` to a hang at patch load.
-  Treat very heavy reverbs with respect until per-effect honest costs land.
+- **DSP cost** is a float the effect declares in its descriptor (stock
+  effects declare 11.6–128). The pedal sums it across the patch and refuses
+  the patch with `DSP full` above a limit measured at 224.4–228.4. The linker
+  defaults to 20.0; heavy effects set an honest value (`LinkerConfig.dsp_cost`)
+  — NAM declares 194/177, CabIR 10. Declaring too little lets the firmware
+  green-light a chain the DSP can't run: crackles, or a hang at patch load.
+- **File size cap:** a ZDL over ~32 KB freezes the pedal at boot (largest
+  proven: 32,126 bytes file, 29,576 bytes code+data; 30,336 froze).
+  [build/zdl_size_guard.py](build/zdl_size_guard.py) enforces it.
 
 ### Parameters are hostile
 
@@ -324,7 +411,8 @@ deep versions live in [docs/](docs/) and [build/ABI.md](build/ABI.md).
 ### Identity and packaging
 
 - ZDL basenames must be **≤ 8 characters** and unique after truncation, or
-  effect identities collide and the pedal freezes.
+  effect identities collide and the pedal freezes at boot. The effect DB build
+  refuses a `dist/` that breaks this.
 - There is **no sort field** in the header — on-device browse order tracks
   fxid. This pack uses 450+ to avoid stock collisions.
 - gid ↔ category must match the exported symbol prefix
